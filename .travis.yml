@@ -2,8 +2,6 @@ dist: xenial
 language: go
 go:
   - "1.11.x"
-# node_js:
-#   - "10.15"
 
 matrix:
   include:
@@ -12,6 +10,7 @@ matrix:
         - docker
     - os: osx
       osx_image: xcode8
+
 # branches:
 #   only:
 #     - master
@@ -40,7 +39,6 @@ addons:
   chrome: stable
 
 install:
-  # - cd electron && npm install && ./build-server.sh && cd ..
   - nvm install 10.15
   - nvm use 10.15
   - if [[ ! -d "$GOPATH/src/github.com/skycoin/skycoin-web" ]]; then mkdir -p $GOPATH/src/github.com/skycoin; ln -s $TRAVIS_BUILD_DIR $GOPATH/src/github.com/skycoin/skycoin-web; fi
@@ -48,17 +46,17 @@ install:
   - npm install
   - cd electron && npm install && ./build-server.sh && cd ..
 
+
 before_script:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./ci-scripts/add-key.sh; fi
 
 script:
   # Run 'check' on linux, as osx does not have `docker` service.
-  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make check; fi || exit 1
-  # - make lint || exit 1
-  # - make unit-test || exit 1
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make check; fi || exit 1
+  - make lint || exit 1
+  - make unit-test || exit 1
   - make build || exit 1
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make build-electron-linux; fi || exit 1
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make build-electron-mac; fi || exit 1
+  ./ci-scripts/build-wallets.sh || exit 1
 
 notifications:
   # https://github.com/kvld/travisci-telegram TravisCI Telegram Bot integration
