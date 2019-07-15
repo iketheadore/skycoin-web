@@ -22,13 +22,13 @@ env:
     - ELECTRON_CACHE: $HOME/.cache/electron
     - ELECTRON_BUILDER_CACHE: $HOME/.cache/electron-builder
 
-# cache:
-#   directories:
-#     - node_modules
-#     - electron/node_modules
-#     - $HOME/.cache/electron
-#     - $HOME/.cache/electron-builder
-#     - $HOME/.npm/_prebuilds
+cache:
+  directories:
+    - node_modules
+    - electron/node_modules
+    - $HOME/.cache/electron
+    - $HOME/.cache/electron-builder
+    - $HOME/.npm/_prebuilds
 
 services:
   - xvfb
@@ -48,18 +48,23 @@ install:
 
 
 before_script:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./ci-scripts/add-key.sh; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_PULL_REQUEST" == false ]]; then ./ci-scripts/add-key.sh; fi
 
 script:
   # Run 'check' on linux, as osx does not have `docker` service.
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then make check; fi || exit 1
   - make lint || exit 1
   - make unit-test || exit 1
-  - make build-electron || exit 1
+  # Do not do code signing if it's a PR.
+  - if [[ "$TRAVIS_PULL_REQUEST" == true ]]; then
+      CSC_IDENTITY_AUTO_DISCOVERY=false make build-electron || exit 1;
+    else
+      make build-electron || exit 1;
+    fi
 
 notifications:
-  email:
-    - travis@skuycoin.net
+  # email:
+  #   - travis@skuycoin.net
   # https://github.com/kvld/travisci-telegram TravisCI Telegram Bot integration
   webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
 
